@@ -1,0 +1,10 @@
+{
+    "triggerTaskOnSave.tasks": {
+        "Butane Build": [
+            "*.bu",
+        ],
+    },
+    "files.associations": {
+        "*.bu": "yaml"
+    }
+}

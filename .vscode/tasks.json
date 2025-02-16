@@ -1,0 +1,66 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Butane Check",
+            "type": "shell",
+            "command": "butane",
+            "args": [
+                "--check",
+                "--strict",
+                "${fileDirname}/${fileBasename}"
+            ],
+            "icon": {
+                "id": "tools",
+                "color": "terminal.ansiBlue"
+            },
+        },
+        {
+            "label": "Butane Build",
+            "type": "shell",
+            "command": "butane",
+            "args": [
+                "--pretty",
+                "--strict",
+                "${fileDirname}/${fileBasename}",
+                ">",
+                "${fileDirname}/${fileBasenameNoExtension}.ign"
+            ],
+            "icon": {
+                "id": "tools",
+                "color": "terminal.ansiBlue"
+            },
+            "dependsOn": [
+                "Butane Check"
+            ]
+        },
+        {
+            "label": "Serve .ign files",
+            "type": "shell",
+            "command": "python3 -m http.server 2886",
+            "runOptions": {
+                "runOn": "folderOpen"
+            },
+            "icon": {
+                "id": "globe",
+                "color": "terminal.ansiCyan"
+            },
+            "isBackground": true,
+            "problemMatcher": [
+                {
+                    "pattern": [{
+                        "regexp": "",
+                        "file": 1,
+                        "location": 2,
+                        "message": 3
+                    }],
+                    "background": {
+                        "activeOnStart": true,
+                        "beginsPattern": "\n",
+                        "endsPattern": "Serving HTTP on 0.0.0.0 port.*"
+                    }
+                }
+            ]
+        }
+    ]
+}
