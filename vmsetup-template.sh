@@ -12,16 +12,20 @@ export LC_ALL=C
 
 # template vm vars
 TEMPLATE_VMID="900"
-TEMPLATE_VMSTORAGE="local"
+TEMPLATE_VM_NAME="fcos_tmplt"
+TEMPLATE_VMSTORAGE="local-thin"
+TEMPLATE_VMSTORAGE_type="block"
+#TEMPLATE_VMSTORAGE_type="file"
 SNIPPET_STORAGE="local"
+VMDISK_SIZE="100G"
 VMDISK_OPTIONS=",discard=on"
 
-TEMPLATE_IGNITION="fcos-base-tmplt.yaml"
+TEMPLATE_IGNITION="fcos_tmplt.ign"
 
 # fcos version
 STREAMS=stable
 VERSION=32.20201018.3.0
-PLATEFORM=qemu
+PLATFORM=qemu
 BASEURL=https://builds.coreos.fedoraproject.org
 
 # =============================================================================================
@@ -48,60 +52,46 @@ pvesh get /storage/${SNIPPET_STORAGE} --noborder --noheader | grep -q snippets |
 	echo "You musr activate content snippet on storage: ${SNIPPET_STORAGE}"
 	exit 1
 }
+SNIPPET_STORAGE_PATH="$(pvesh get /storage/${SNIPPET_STORAGE} --noborder --noheader | grep ^path | awk '{print $NF}')"
 
 # copy files
-echo "Copy hook-script and ignition config to snippet storage..."
-snippet_storage="$(pvesh get /storage/${SNIPPET_STORAGE} --noborder --noheader | grep ^path | awk '{print $NF}')"
-cp -av ${TEMPLATE_IGNITION} hook-fcos.sh ${snippet_storage}/snippets
-sed -e "/^COREOS_TMPLT/ c\COREOS_TMPLT=${snippet_storage}/snippets/${TEMPLATE_IGNITION}" -i ${snippet_storage}/snippets/hook-fcos.sh
-chmod 755 ${snippet_storage}/snippets/hook-fcos.sh
-
-# storage type ? (https://pve.proxmox.com/wiki/Storage)
-echo -n "Get storage \"${TEMPLATE_VMSTORAGE}\" type... "
-case "$(pvesh get /storage/${TEMPLATE_VMSTORAGE} --noborder --noheader | grep ^type | awk '{print $2}')" in
-        dir|nfs|cifs|glusterfs|cephfs) TEMPLATE_VMSTORAGE_type="file"; echo "[file]"; ;;
-        lvm|lvmthin|iscsi|iscsidirect|rbd|zfs|zfspool) TEMPLATE_VMSTORAGE_type="block"; echo "[block]" ;;
-        *)
-                echo "[unknown]"
-                exit 1
-        ;;
-esac
+[[ ! -e ${TEMPLATE_IGNITION} ]]&& {
+    echo "${TEMPLATE_IGNITION} missing"
+    exit 1
+}
+echo "Copy ignition config to snippet storage..."
+cp -av ${TEMPLATE_IGNITION} ${SNIPPET_STORAGE_PATH}/snippets
 
 # download fcos vdisk
-[[ ! -e fedora-coreos-${VERSION}-${PLATEFORM}.x86_64.qcow2 ]]&& {
+[[ ! -e fedora-coreos-${VERSION}-${PLATFORM}.x86_64.qcow2 ]]&& {
     echo "Download fedora coreos..."
     wget -q --show-progress \
-        ${BASEURL}/prod/streams/${STREAMS}/builds/${VERSION}/x86_64/fedora-coreos-${VERSION}-${PLATEFORM}.x86_64.qcow2.xz
-    xz -dv fedora-coreos-${VERSION}-${PLATEFORM}.x86_64.qcow2.xz
+        ${BASEURL}/prod/streams/${STREAMS}/builds/${VERSION}/x86_64/fedora-coreos-${VERSION}-${PLATFORM}.x86_64.qcow2.xz
+    xz -dv fedora-coreos-${VERSION}-${PLATFORM}.x86_64.qcow2.xz
 }
 
 # create a new VM
 echo "Create fedora coreos vm ${VMID}"
-qm create ${TEMPLATE_VMID} --name fcos-tmplt
+qm create ${TEMPLATE_VMID} --name "${TEMPLATE_VM_NAME}"
 qm set ${TEMPLATE_VMID} --memory 4096 \
 			--cpu host \
 			--cores 4 \
 			--agent enabled=1 \
 			--autostart \
 			--onboot 1 \
-			--ostype l26 \
-			--tablet 0 \
-			--boot c --bootdisk scsi0
+			--ostype l26
 
-template_vmcreated=$(date +%Y-%m-%d)
-qm set ${TEMPLATE_VMID} --description "Fedora CoreOS - Geco-iT Template
-
- - Version             : ${VERSION}
- - Cloud-init          : true
-
-Creation date : ${template_vmcreated}
-"
+#template_vmcreated=$(date +%Y-%m-%d)
+#qm set ${TEMPLATE_VMID} --description "Fedora CoreOS - Geco-iT Template
+#
+# - Version             : ${VERSION}
+# - Cloud-init          : true
+#
+#Creation date : ${template_vmcreated}
+#"
 
 qm set ${TEMPLATE_VMID} --net0 virtio,bridge=vmbr0
 #qm set ${TEMPLATE_VMID} --net1 virtio,bridge=vmbr1
-
-echo -e "\nCreate Cloud-init vmdisk..."
-qm set ${TEMPLATE_VMID} --ide2 ${TEMPLATE_VMSTORAGE}:cloudinit
 
 # import fedora disk
 if [[ "x${TEMPLATE_VMSTORAGE_type}" = "xfile" ]]
@@ -112,14 +102,18 @@ else
 	vmdisk_name="vm-${TEMPLATE_VMID}-disk-0"
         vmdisk_format=""
 fi
-qm importdisk ${TEMPLATE_VMID} fedora-coreos-${VERSION}-${PLATEFORM}.x86_64.qcow2 ${TEMPLATE_VMSTORAGE} ${vmdisk_format}
+qm importdisk ${TEMPLATE_VMID} fedora-coreos-${VERSION}-${PLATFORM}.x86_64.qcow2 ${TEMPLATE_VMSTORAGE} ${vmdisk_format}
 qm set ${TEMPLATE_VMID} --scsihw virtio-scsi-pci --scsi0 ${TEMPLATE_VMSTORAGE}:${vmdisk_name}${VMDISK_OPTIONS}
+qm resize ${TEMPLATE_VMID} scsi0 ${VMDISK_SIZE}
 
-# set hook-script
-qm set ${TEMPLATE_VMID} -hookscript ${SNIPPET_STORAGE}:snippets/hook-fcos.sh
+qm set ${TEMPLATE_VMID} --boot order=scsi0
 
+# Set fw_cfg to provide ignition config (in qemu image specific way.) 
+FW_CFG="-fw_cfg name=opt/com.coreos/config,file=${SNIPPET_STORAGE_PATH}/snippets/${TEMPLATE_IGNITION}"
+qm set ${TEMPLATE_VMID} -args "${FW_CFG}"
 
 # convert vm template
-echo -n "Convert VM ${TEMPLATE_VMID} in proxmox vm template... "
-qm template ${TEMPLATE_VMID} &> /dev/null || true
+#echo -n "Convert VM ${TEMPLATE_VMID} in proxmox vm template... "
+#qm template ${TEMPLATE_VMID} &> /dev/null || true
+
 echo "[done]"
