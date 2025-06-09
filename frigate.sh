@@ -11,7 +11,7 @@ export LANG=C
 export LC_ALL=C
 
 # template vm vars
-TEMPLATE_VMID="900"
+TEMPLATE_VMID="104"
 TEMPLATE_VM_NAME="frigate"
 TEMPLATE_VMSTORAGE="local-thin"
 TEMPLATE_VMSTORAGE_type="block"
@@ -24,7 +24,7 @@ TEMPLATE_IGNITION="frigate.ign"
 
 # fcos version
 STREAMS=stable
-VERSION=32.20201018.3.0
+VERSION=41.20250315.3.0
 PLATFORM=qemu
 BASEURL=https://builds.coreos.fedoraproject.org
 
@@ -73,25 +73,19 @@ cp -av ${TEMPLATE_IGNITION} ${SNIPPET_STORAGE_PATH}/snippets
 # create a new VM
 echo "Create fedora coreos vm ${VMID}"
 qm create ${TEMPLATE_VMID} --name "${TEMPLATE_VM_NAME}"
-qm set ${TEMPLATE_VMID} --memory 4096 \
+qm set ${TEMPLATE_VMID} --memory 8192 \
 			--cpu host \
-			--cores 4 \
+			--cores 8 \
 			--agent enabled=1 \
 			--autostart \
 			--onboot 1 \
 			--ostype l26
 
-#template_vmcreated=$(date +%Y-%m-%d)
-#qm set ${TEMPLATE_VMID} --description "Fedora CoreOS - Geco-iT Template
-#
-# - Version             : ${VERSION}
-# - Cloud-init          : true
-#
-#Creation date : ${template_vmcreated}
-#"
-
 qm set ${TEMPLATE_VMID} --net0 virtio,bridge=vmbr0
 #qm set ${TEMPLATE_VMID} --net1 virtio,bridge=vmbr1
+
+# add a serial console in case of emergency console and avoid the default serial-getty service failing
+qm set ${TEMPLATE_VMID} -serial0 socket
 
 # import fedora disk
 if [[ "x${TEMPLATE_VMSTORAGE_type}" = "xfile" ]]
@@ -105,15 +99,14 @@ fi
 qm importdisk ${TEMPLATE_VMID} fedora-coreos-${VERSION}-${PLATFORM}.x86_64.qcow2 ${TEMPLATE_VMSTORAGE} ${vmdisk_format}
 qm set ${TEMPLATE_VMID} --scsihw virtio-scsi-pci --scsi0 ${TEMPLATE_VMSTORAGE}:${vmdisk_name}${VMDISK_OPTIONS}
 qm resize ${TEMPLATE_VMID} scsi0 ${VMDISK_SIZE}
-
 qm set ${TEMPLATE_VMID} --boot order=scsi0
+
+# UEFI bios to allow GPU passthrough, and a disk to support uefi bios settings
+# after the other disk operations to avoid interferring with disk naming assumptions
+qm set ${TEMPLATE_VMID} --bios ovmf -efidisk0 ${TEMPLATE_VMSTORAGE}:0,efitype=4m,pre-enrolled-keys=1
 
 # Set fw_cfg to provide ignition config (in qemu image specific way.) 
 FW_CFG="-fw_cfg name=opt/com.coreos/config,file=${SNIPPET_STORAGE_PATH}/snippets/${TEMPLATE_IGNITION}"
 qm set ${TEMPLATE_VMID} -args "${FW_CFG}"
-
-# convert vm template
-#echo -n "Convert VM ${TEMPLATE_VMID} in proxmox vm template... "
-#qm template ${TEMPLATE_VMID} &> /dev/null || true
 
 echo "[done]"
