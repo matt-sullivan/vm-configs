@@ -1,16 +1,37 @@
 variant: fcos
-version: 1.0.0
+version: 1.6.0
 passwd:
   users:
     - name: core
-      ssh_authorized_keys:
-        - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIP0aOcfZUTphzc5SbyyufwcwLiKPsDwzG14LckmPyRaa
+      ssh_authorized_keys_local:
+        - ssh-key.pub
+
 storage:
   files:
     - path: /etc/hostname
       mode: 0644
       contents:
-        inline: frigate
+        inline: frigate-srv
+
+    # I'm not sure exactly what this pager acheives but it seems to change the graphial console to
+    # add a scroll bar
+    - path: /etc/profile.d/systemd-pager.sh
+      mode: 0644
+      contents:
+        inline: |
+          # Tell systemd to not use a pager when printing information
+          export SYSTEMD_PAGER=cat
+    
+    # Only reboot the server late on the weekend
+    - path: /etc/zincati/config.d/55-updates-strategy.toml
+      contents:
+        inline: |
+          [updates]
+          strategy = "periodic"
+          [[updates.periodic.window]]
+          days = [ "Sat", "Sun" ]
+          start_time = "00:30"
+          length_minutes = 60
 
   links:
     - path: /etc/localtime
@@ -18,6 +39,26 @@ storage:
 
 systemd:
   units:
+  # Auto login on both serial and VGA/virtual terminal
+  - name: serial-getty@ttyS0.service
+    dropins:
+    - name: autologin-core.conf
+      contents: |
+        [Service]
+        # Override Execstart in main unit
+        ExecStart=
+        # Add new Execstart with `-` prefix to ignore failure`
+        ExecStart=-/usr/sbin/agetty --autologin core --noclear %I $TERM
+  - name: getty@.service
+    dropins:
+    - name: autologin-core.conf
+      contents: |
+        [Service]
+        # Override Execstart in main unit
+        ExecStart=
+        # Add new Execstart with `-` prefix to ignore failure`
+        ExecStart=-/usr/sbin/agetty --autologin core --noclear %I $TERM
+
   # - name: var-mnt-container_data.mount
   #   enabled: true
   #   contents: |-

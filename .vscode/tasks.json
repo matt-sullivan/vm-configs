@@ -8,6 +8,7 @@
             "args": [
                 "--check",
                 "--strict",
+                "--files-dir", "${fileDirname}",
                 "${fileDirname}/${fileBasename}"
             ],
             "icon": {
@@ -22,6 +23,7 @@
             "args": [
                 "--pretty",
                 "--strict",
+                "--files-dir", "${fileDirname}",
                 "${fileDirname}/${fileBasename}",
                 ">",
                 "${fileDirname}/${fileBasenameNoExtension}.ign"
