@@ -7,6 +7,20 @@ passwd:
         - ssh-key.pub
 
 storage:
+  disks:
+  # This defines two partitions, each on its own disk. The disks are
+  # identified by their WWN.
+    - device: /dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_drive-scsi1
+      wipe_table: true
+      partitions:
+      - label: "container_data"
+  
+  filesystems:
+    - path: /var/mnt/container_data
+      device: /dev/disk/by-partlabel/container_data
+      format: ext4
+      label: container_data
+
   files:
     - path: /etc/hostname
       mode: 0644
@@ -32,10 +46,17 @@ storage:
           days = [ "Sat", "Sun" ]
           start_time = "00:30"
           length_minutes = 60
-
+  
+  directories:
+    - path: /mnt/container_data/volumes
+  
   links:
     - path: /etc/localtime
       target: ../usr/share/zoneinfo/Australia/Brisbane
+    
+    # Store docker volumes on separate (less ephemeral) disk
+    - path: /var/lib/docker/volumes
+      target: /mnt/container_data/volumes
 
 systemd:
   units:
@@ -59,29 +80,34 @@ systemd:
         # Add new Execstart with `-` prefix to ignore failure`
         ExecStart=-/usr/sbin/agetty --autologin core --noclear %I $TERM
 
-  # - name: var-mnt-container_data.mount
-  #   enabled: true
-  #   contents: |-
-  #     [Unit]
-  #     Description=Container data directory
+  # Second disk for docker container data
+  # This concept copied from the unifi VM. I'm not sure why unifi uses bind mounts but this will
+  # both allow for bind mounts and put volumes on the separate (less ephemeral) disk
+  # Note: it's mounted at /var/mnt/container_data but only because /mnt points to /var/mnt,
+  # uses of it should refer to /mnt/container_data.
+  - name: var-mnt-container_data.mount
+    enabled: true
+    contents: |-
+      [Unit]
+      Description=Container data directory
 
-  #     [Mount]
-  #     What=/dev/disk/by-uuid/037983dc-436d-48d6-bec9-9cf40be697b9
-  #     Where=/var/mnt/container_data
-  #     Type=auto
+      [Mount]
+      What=/dev/disk/by-label/container_data
+      Where=/var/mnt/container_data
+      Type=auto
 
-  #     [Install]
-  #     WantedBy=multi-user.target
-  # - name: var-mnt-container_data.automount
-  #   enabled: true
-  #   contents: |-
-  #     [Unit]
-  #     Description=Container data automount
+      [Install]
+      WantedBy=multi-user.target
+  - name: var-mnt-container_data.automount
+    enabled: true
+    contents: |-
+      [Unit]
+      Description=Container data automount
 
-  #     [Automount]
-  #     Where=/var/mnt/container_data
-      # [Install]
-      # WantedBy=multi-user.target
+      [Automount]
+      Where=/var/mnt/container_data
+      [Install]
+      WantedBy=multi-user.target
 
   - name: docker.portainer.service
     enabled: true
@@ -89,7 +115,7 @@ systemd:
       [Unit]
       Description=Portainer Admin Container
       After=docker.service
-      Requires=docker.service mnt-container_data.mount
+      Requires=docker.service var-mnt-container_data.mount
 
       [Service]
       Type=oneshot
@@ -111,7 +137,7 @@ systemd:
       [Unit]
       Description=QEMU Guest Agent Container
       After=docker.service
-      Requires=docker.service mnt-container_data.mount
+      Requires=docker.service var-mnt-container_data.mount
 
       [Service]
       Type=oneshot

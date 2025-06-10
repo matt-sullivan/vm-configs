@@ -101,6 +101,10 @@ qm set ${TEMPLATE_VMID} --scsihw virtio-scsi-pci --scsi0 ${TEMPLATE_VMSTORAGE}:$
 qm resize ${TEMPLATE_VMID} scsi0 ${VMDISK_SIZE}
 qm set ${TEMPLATE_VMID} --boot order=scsi0
 
+# A second disk for container data storage (in two steps to re-user the size variable)
+qm set ${TEMPLATE_VMID} --scsi1 ${TEMPLATE_VMSTORAGE}:1${VMDISK_OPTIONS}
+qm resize ${TEMPLATE_VMID} scsi1 ${VMDISK_SIZE}
+
 # UEFI bios to allow GPU passthrough, and a disk to support uefi bios settings
 # after the other disk operations to avoid interferring with disk naming assumptions
 qm set ${TEMPLATE_VMID} --bios ovmf -efidisk0 ${TEMPLATE_VMSTORAGE}:0,efitype=4m,pre-enrolled-keys=1

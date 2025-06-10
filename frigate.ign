@@ -13,6 +13,22 @@
     ]
   },
   "storage": {
+    "directories": [
+      {
+        "path": "/mnt/container_data/volumes"
+      }
+    ],
+    "disks": [
+      {
+        "device": "/dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_drive-scsi1",
+        "partitions": [
+          {
+            "label": "container_data"
+          }
+        ],
+        "wipeTable": true
+      }
+    ],
     "files": [
       {
         "path": "/etc/hostname",
@@ -38,10 +54,22 @@
         }
       }
     ],
+    "filesystems": [
+      {
+        "device": "/dev/disk/by-partlabel/container_data",
+        "format": "ext4",
+        "label": "container_data",
+        "path": "/var/mnt/container_data"
+      }
+    ],
     "links": [
       {
         "path": "/etc/localtime",
         "target": "../usr/share/zoneinfo/Australia/Brisbane"
+      },
+      {
+        "path": "/var/lib/docker/volumes",
+        "target": "/mnt/container_data/volumes"
       }
     ]
   },
@@ -66,12 +94,22 @@
         "name": "getty@.service"
       },
       {
-        "contents": "[Unit]\nDescription=Portainer Admin Container\nAfter=docker.service\nRequires=docker.service mnt-container_data.mount\n\n[Service]\nType=oneshot\nRemainAfterExit=yes\nTimeoutStartSec=0\nExecStartPre=-/usr/bin/docker stop %n\nExecStartPre=-/usr/bin/docker rm %n\nExecStartPre=/usr/bin/docker pull portainer/portainer\nExecStart=-/usr/bin/mkdir -p /mnt/container_data/portainer_data\n# Privileged mode is required for binding to local socket to work due to SELINUX (https://github.com/portainer/portainer/issues/849)\nExecStart=/usr/bin/docker run --privileged=true -d -p 9000:9000 --name %n --restart always -v /var/run/docker.sock:/var/run/docker.sock -v /mnt/container_data/portainer_data:/data portainer/portainer --no-analytics --host=unix:///var/run/docker.sock\nExecStop=/usr/bin/docker stop -t 15 %n\n\n[Install]\nWantedBy=multi-user.target",
+        "contents": "[Unit]\nDescription=Container data directory\n\n[Mount]\nWhat=/dev/disk/by-label/container_data\nWhere=/var/mnt/container_data\nType=auto\n\n[Install]\nWantedBy=multi-user.target",
+        "enabled": true,
+        "name": "var-mnt-container_data.mount"
+      },
+      {
+        "contents": "[Unit]\nDescription=Container data automount\n\n[Automount]\nWhere=/var/mnt/container_data\n[Install]\nWantedBy=multi-user.target",
+        "enabled": true,
+        "name": "var-mnt-container_data.automount"
+      },
+      {
+        "contents": "[Unit]\nDescription=Portainer Admin Container\nAfter=docker.service\nRequires=docker.service var-mnt-container_data.mount\n\n[Service]\nType=oneshot\nRemainAfterExit=yes\nTimeoutStartSec=0\nExecStartPre=-/usr/bin/docker stop %n\nExecStartPre=-/usr/bin/docker rm %n\nExecStartPre=/usr/bin/docker pull portainer/portainer\nExecStart=-/usr/bin/mkdir -p /mnt/container_data/portainer_data\n# Privileged mode is required for binding to local socket to work due to SELINUX (https://github.com/portainer/portainer/issues/849)\nExecStart=/usr/bin/docker run --privileged=true -d -p 9000:9000 --name %n --restart always -v /var/run/docker.sock:/var/run/docker.sock -v /mnt/container_data/portainer_data:/data portainer/portainer --no-analytics --host=unix:///var/run/docker.sock\nExecStop=/usr/bin/docker stop -t 15 %n\n\n[Install]\nWantedBy=multi-user.target",
         "enabled": true,
         "name": "docker.portainer.service"
       },
       {
-        "contents": "[Unit]\nDescription=QEMU Guest Agent Container\nAfter=docker.service\nRequires=docker.service mnt-container_data.mount\n\n[Service]\nType=oneshot\nRemainAfterExit=yes\nTimeoutStartSec=0\nExecStartPre=-/usr/bin/docker stop %n\nExecStartPre=-/usr/bin/docker rm %n\nExecStartPre=/usr/bin/docker load -i /mnt/container_data/qemu-guest-agent.tgz\nExecStartPre=/usr/bin/docker tag e2ab nkcx/qemu-guest-agent:latest\n# ExecStartPre=/usr/bin/docker pull nkcx/qemu-guest-agent:latest\n# ExecStart=-/usr/bin/mkdir -p /mnt/container_data/qemu_agent_data\n# Privileged mode is required for binding to local socket to work due to SELINUX (https://github.com/portainer/portainer/issues/849)\nExecStart=/usr/bin/docker run --privileged=true -d --name %n --restart always -v /dev/virtio-ports/org.qemu.guest_agent.0:/dev/virtio-ports/org.qemu.guest_agent.0 nkcx/qemu-guest-agent:latest\nExecStop=/usr/bin/docker stop -t 15 %n\n\n[Install]\nWantedBy=multi-user.target",
+        "contents": "[Unit]\nDescription=QEMU Guest Agent Container\nAfter=docker.service\nRequires=docker.service var-mnt-container_data.mount\n\n[Service]\nType=oneshot\nRemainAfterExit=yes\nTimeoutStartSec=0\nExecStartPre=-/usr/bin/docker stop %n\nExecStartPre=-/usr/bin/docker rm %n\nExecStartPre=/usr/bin/docker load -i /mnt/container_data/qemu-guest-agent.tgz\nExecStartPre=/usr/bin/docker tag e2ab nkcx/qemu-guest-agent:latest\n# ExecStartPre=/usr/bin/docker pull nkcx/qemu-guest-agent:latest\n# ExecStart=-/usr/bin/mkdir -p /mnt/container_data/qemu_agent_data\n# Privileged mode is required for binding to local socket to work due to SELINUX (https://github.com/portainer/portainer/issues/849)\nExecStart=/usr/bin/docker run --privileged=true -d --name %n --restart always -v /dev/virtio-ports/org.qemu.guest_agent.0:/dev/virtio-ports/org.qemu.guest_agent.0 nkcx/qemu-guest-agent:latest\nExecStop=/usr/bin/docker stop -t 15 %n\n\n[Install]\nWantedBy=multi-user.target",
         "enabled": true,
         "name": "docker.qemu-agent.service"
       }
