@@ -81,7 +81,7 @@ qm set ${TEMPLATE_VMID} --memory 8192 \
 			--onboot 1 \
 			--ostype l26
 
-qm set ${TEMPLATE_VMID} --net0 virtio,bridge=vmbr0
+qm set ${TEMPLATE_VMID} --net0 virtio,bridge=vmbr0,tag=3
 #qm set ${TEMPLATE_VMID} --net1 virtio,bridge=vmbr1
 
 # add a serial console in case of emergency console and avoid the default serial-getty service failing
