@@ -46,7 +46,25 @@ storage:
           days = [ "Sat", "Sun" ]
           start_time = "00:30"
           length_minutes = 60
-  
+
+    # Use a static IP to interact with the cameras. Use .2 because the router is .1 on any vlans it connects to
+    - path: /etc/NetworkManager/system-connections/static-ens19.nmconnection
+      mode: 0600
+      contents:
+        inline: |
+          [connection]
+          id=static-ens19
+          type=ethernet
+          interface-name=ens19
+          autoconnect=true
+
+          [ipv4]
+          method=manual
+          addresses=192.168.254.2/24
+
+          [ipv6]
+          method=disabled
+
   directories:
     - path: /mnt/container_data/volumes
   

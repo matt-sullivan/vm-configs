@@ -52,6 +52,14 @@
           "compression": "",
           "source": "data:;base64,W3VwZGF0ZXNdCnN0cmF0ZWd5ID0gInBlcmlvZGljIgpbW3VwZGF0ZXMucGVyaW9kaWMud2luZG93XV0KZGF5cyA9IFsgIlNhdCIsICJTdW4iIF0Kc3RhcnRfdGltZSA9ICIwMDozMCIKbGVuZ3RoX21pbnV0ZXMgPSA2MAo="
         }
+      },
+      {
+        "path": "/etc/NetworkManager/system-connections/static-ens19.nmconnection",
+        "contents": {
+          "compression": "gzip",
+          "source": "data:;base64,H4sIAAAAAAAC/zzMQQqDMBBG4f3cRYvBSl3kJOJimvzFAZ1IZlLo7buwdP++t6SiiuRSdCXJ0ZxdUge1YSb/nIjwDVXhJOqoL07olA/EK+Hm5beIXhuIFjnf40oHfCs5HqyNd+KcK8xgcZhDP0yPPtzHPtzCeIHpD7IYP3dk+gYAAP//QrCmuZoAAAA="
+        },
+        "mode": 384
       }
     ],
     "filesystems": [
