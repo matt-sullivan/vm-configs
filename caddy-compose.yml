@@ -1,0 +1,19 @@
+version: '3'
+name: caddy
+services:
+  caddy:
+    container_name: caddy
+    image: caddy
+    privileged: true
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /mnt/container_data/caddy-config:/config
+      - /mnt/container_data/caddy-data:/data
+      - /mnt/container_data/caddy-Caddyfile:/etc/caddy/Caddyfile
+      - /mnt/container_data/caddy-index.html:/usr/share/caddy/index.html
+networks:
+  default:
+    driver: bridge
