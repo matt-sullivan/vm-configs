@@ -22,6 +22,12 @@ VMDISK_OPTIONS=",discard=on"
 
 IGNITION_FILE_NAME="frigate.ign"
 
+# Move the important disk data aside and restore it later if re-creating the VM
+CONTAINER_DATA_DISK="vm-${VMID}-disk-1"
+CONTAINER_DATA_BACKUP="vm-${VMID}-disk-1-preserved"
+
+NODE=$(hostname)
+
 # fcos version
 STREAMS=stable
 VERSION=41.20250315.3.0
@@ -29,6 +35,31 @@ PLATFORM=qemu
 BASEURL=https://builds.coreos.fedoraproject.org
 
 # =============================================================================================
+
+FORCE=false
+VM_EXISTS=false
+
+# Check for -f flag
+if [[ "$1" == "-f" ]]; then
+  FORCE=true
+fi
+
+# Abort if VM exists and not forced
+if pvesh get /nodes/${NODE}/qemu/${VMID} &>/dev/null; then
+  VM_EXISTS=true
+fi
+if $VM_EXISTS && ! $FORCE; then
+  echo "Error: VM with ID ${VMID} already exists. Use -f to override."
+  exit 1
+fi
+
+if $VM_EXISTS; then
+  echo "VM already exists, deleting"
+  qm stop $VMID
+  lvrename pve ${CONTAINER_DATA_DISK} ${CONTAINER_DATA_BACKUP}
+  qm destroy $VMID
+  lvrename pve ${CONTAINER_DATA_BACKUP} ${CONTAINER_DATA_DISK}
+fi
 
 # pve storage exist ?
 echo -n "Check if vm storage ${VMSTORAGE} exist... "
@@ -100,8 +131,12 @@ qm set ${VMID} --scsihw virtio-scsi-pci --scsi0 ${VMSTORAGE}:${vmdisk_name}${VMD
 qm resize ${VMID} scsi0 ${VMDISK_SIZE}
 qm set ${VMID} --boot order=scsi0
 
-# A second disk for container data storage (in two steps to re-use the size variable)
-qm set ${VMID} --scsi1 ${VMSTORAGE}:1${VMDISK_OPTIONS}
+# A second disk for container data storage (in two steps to re-use the size variable that has 'G' in it)
+if lvs --noheadings -o lv_name | grep -q -w "${CONTAINER_DATA_DISK}"; then
+  qm set ${VMID} --scsi1 ${VMSTORAGE}:${CONTAINER_DATA_DISK}${VMDISK_OPTIONS}
+else
+  qm set ${VMID} --scsi1 ${VMSTORAGE}:1${VMDISK_OPTIONS}
+fi
 qm resize ${VMID} scsi1 ${VMDISK_SIZE}
 
 # UEFI bios to allow GPU passthrough, and a disk to support uefi bios settings
