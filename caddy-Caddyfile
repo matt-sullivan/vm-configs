@@ -1,0 +1,34 @@
+caddy.mattnet.xyz {
+	respond "Caddy here"
+}
+# Frigate NVR
+cameras.mattnet.xyz {
+	reverse_proxy https://frigate-srv:8971 {
+		transport http {
+			tls_insecure_skip_verify
+		}
+	}
+}
+# Frigate server portainer instance
+frigate-srv-portainer.mattnet.xyz {
+	reverse_proxy http://frigate-srv:9000
+}
+# Direct camera connections
+# This is connecting, but gets random 400 errors and renders the page incorrectly
+downstairs.mattnet.xyz {
+	reverse_proxy http://192.168.254.100
+}
+unifi.mattnet.xyz {
+	reverse_proxy https://unifi.local:8443 {
+		transport http {
+			tls_insecure_skip_verify
+		}
+	}
+}
+proxmox.mattnet.xyz {
+	reverse_proxy https://proxmox.local:8006 {
+		transport http {
+			tls_insecure_skip_verify
+		}
+	}
+}
