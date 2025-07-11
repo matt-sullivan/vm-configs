@@ -12,4 +12,3 @@ services:
       - /mnt/container_data/caddy-config:/config
       - /mnt/container_data/caddy-data:/data
       - /mnt/container_data/caddy-Caddyfile:/etc/caddy/Caddyfile
-      - /mnt/container_data/caddy-index.html:/usr/share/caddy/index.html

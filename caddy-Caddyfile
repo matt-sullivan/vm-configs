@@ -14,9 +14,20 @@ frigate-srv-portainer.mattnet.xyz {
 	reverse_proxy http://frigate-srv:9000
 }
 # Direct camera connections
-# This is connecting, but gets random 400 errors and renders the page incorrectly
 downstairs.mattnet.xyz {
-	reverse_proxy http://192.168.254.100
+	reverse_proxy http://192.168.254.100 {
+		# Block all default and allow a small curated set to avoid too many headers error
+		header_up -*
+		header_up Host {host}                       # Original host requested by the client
+		header_up Cookie {http.request.header.Cookie}
+		header_up Accept {http.request.header.Accept}
+		#header_up Accept-Language {http.request.header.Accept-Language}
+		#header_up Accept-Encoding {http.request.header.Accept-Encoding}
+		#header_up X-Real-IP {remote_host}
+		#header_up X-Forwarded-For {remote_host}
+		#header_up X-Forwarded-Proto {scheme}
+		#header_up User-Agent {http.request.header.User-Agent}
+	}
 }
 unifi.mattnet.xyz {
 	reverse_proxy https://unifi.local:8443 {
