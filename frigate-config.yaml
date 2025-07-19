@@ -7,13 +7,19 @@ cameras:
     enabled: true
     ffmpeg:
       inputs:
-        - path: rtsp://admin:{FRIGATE_RTSP_PASSWORD}@192.168.254.100:554/Streaming/Channels/101
+        - path: rtsp://127.0.0.1:8554/downstairs
+          roles:
+            - record
+        - path: rtsp://admin:{FRIGATE_RTSP_PASSWORD}@192.168.254.100:554/Streaming/Channels/102
           roles:
             - detect
     detect:
-      enabled: false # <---- disable detection until you have a working camera feed
-      width: 2944
-      height: 1656
+      enabled: false
+
+go2rtc:
+  streams:
+    downstairs:
+      - rtsp://admin:{FRIGATE_RTSP_PASSWORD}@192.168.254.100:554/Streaming/Channels/101
 
 record:
   enabled: true
