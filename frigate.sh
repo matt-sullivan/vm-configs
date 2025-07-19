@@ -106,6 +106,7 @@ qm create ${VMID} --name "${VM_NAME}"
 qm set ${VMID} --memory 8192 \
 			--cpu host \
 			--cores 8 \
+			--machine q35 \
 			--agent enabled=1 \
 			--autostart \
 			--onboot 1 \
@@ -147,5 +148,9 @@ qm set ${VMID} --bios ovmf -efidisk0 ${VMSTORAGE}:0,efitype=4m,pre-enrolled-keys
 # Set fw_cfg to provide ignition config (in qemu image specific way.) 
 FW_CFG="-fw_cfg name=opt/com.coreos/config,file=${SNIPPET_STORAGE_PATH}/snippets/${IGNITION_FILE_NAME}"
 qm set ${VMID} -args "${FW_CFG}"
+
+# Pass through nvidia GPU (and audio device)
+qm set ${VMID} --hostpci0 0000:0f:00.0,pcie=1,rombar=0
+qm set ${VMID} --hostpci1 0000:0f:00.1,pcie=1
 
 echo "[done]"
