@@ -65,6 +65,34 @@ storage:
           [ipv6]
           method=disabled
 
+    # Add the repo for nvidia drivers
+    # Using RHEL9 - apparently that's better and more stable for FCOS than plain fedora ones
+    - path: /etc/yum.repos.d/nvidia.repo
+      mode: 0644
+      contents:
+        inline: |
+          [nvidia]
+          name=NVIDIA CUDA for RHEL9
+          baseurl=https://developer.download.nvidia.com/compute/cuda/repos/rhel9/x86_64
+          enabled=1
+          gpgcheck=1
+          gpgkey=https://developer.download.nvidia.com/compute/cuda/repos/rhel9/x86_64/D42D0685.pub
+
+    # Nvidia plugin to docker runtime
+    - path: /etc/docker/daemon.json
+      mode: 0644
+      contents:
+        inline: |
+          {
+            "default-runtime": "runc",
+            "runtimes": {
+              "nvidia": {
+                "path": "nvidia-container-runtime",
+                "runtimeArgs": []
+              }
+            }
+          }
+
   directories:
     - path: /mnt/container_data/volumes
   
@@ -97,6 +125,28 @@ systemd:
         ExecStart=
         # Add new Execstart with `-` prefix to ignore failure`
         ExecStart=-/usr/sbin/agetty --autologin core --noclear %I $TERM
+
+  # Add nvidia drivers
+  - name: rpm-ostree-install-nvidia.service
+    enabled: true
+    contents: |-
+      [Unit]
+      Description=Install NVIDIA driver via rpm-ostree
+      Wants=network-online.target
+      After=network-online.target
+      ConditionPathExists=!/var/lib/nvidia-driver-installed
+
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/bin/bash -c '
+        set -euxo pipefail
+        rpm-ostree install -y nvidia-driver nvidia-container-toolkit
+        touch /etc/nvidia-driver-installed
+      '
+      RemainAfterExit=true
+
+      [Install]
+      WantedBy=multi-user.target
 
   # Second disk for docker container data
   # This concept copied from the unifi VM. I'm not sure why unifi uses bind mounts but this will

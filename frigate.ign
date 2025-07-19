@@ -60,6 +60,22 @@
           "source": "data:;base64,H4sIAAAAAAAC/zzMQQqDMBBG4f3cRYvBSl3kJOJimvzFAZ1IZlLo7buwdP++t6SiiuRSdCXJ0ZxdUge1YSb/nIjwDVXhJOqoL07olA/EK+Hm5beIXhuIFjnf40oHfCs5HqyNd+KcK8xgcZhDP0yPPtzHPtzCeIHpD7IYP3dk+gYAAP//QrCmuZoAAAA="
         },
         "mode": 384
+      },
+      {
+        "path": "/etc/yum.repos.d/nvidia.repo",
+        "contents": {
+          "compression": "gzip",
+          "source": "data:;base64,H4sIAAAAAAAC/6zNwQqCMBjA8fuewifYV2GigQdpQUJ0COoSEXP7UnHuG3OzevsOvkK3/+n/u9u51718MCtHLM+3WtRVsr+KKnmRTy7Hw6lgjZwwelN2IbhpB6BxRkMOPdf0toak5suFKxpB0ehiQFBRS/DoaALfoSngk2fPLGVoZWNQl2vWulZ1qIYlB/z+RwCRbsQqy7fcxYb9AgAA//83m0Lu4QAAAA=="
+        },
+        "mode": 420
+      },
+      {
+        "path": "/etc/docker/daemon.json",
+        "contents": {
+          "compression": "gzip",
+          "source": "data:;base64,H4sIAAAAAAAC/6rmUlBQSklNSyzNKdEtKs0rycxNVbJSUCoqzUtW0gFJQgWLlawUQIoVFJTyyjJTMhPhfAUFpYLEkgyQLoiMbnJ+XkliZl5qEdxEHZhKqIBjUTrIwOhYsHgtFwjXcgECAAD//2Y9cpaNAAAA"
+        },
+        "mode": 420
       }
     ],
     "filesystems": [
@@ -100,6 +116,11 @@
           }
         ],
         "name": "getty@.service"
+      },
+      {
+        "contents": "[Unit]\nDescription=Install NVIDIA driver via rpm-ostree\nWants=network-online.target\nAfter=network-online.target\nConditionPathExists=!/var/lib/nvidia-driver-installed\n\n[Service]\nType=oneshot\nExecStart=/usr/bin/rpm-ostree install -y nvidia-driver nvidia-container-toolkit\nExecStart=/usr/bin/touch /var/lib/nvidia-driver-installed\nRemainAfterExit=true\n\n[Install]\nWantedBy=multi-user.target\n",
+        "enabled": true,
+        "name": "rpm-ostree-install-nvidia.service"
       },
       {
         "contents": "[Unit]\nDescription=Container data directory\n\n[Mount]\nWhat=/dev/disk/by-label/container_data\nWhere=/var/mnt/container_data\nType=auto\n\n[Install]\nWantedBy=multi-user.target",
