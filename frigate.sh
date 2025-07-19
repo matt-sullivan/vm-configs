@@ -21,6 +21,7 @@ VMDISK_SIZE="100G"
 VMDISK_OPTIONS=",discard=on"
 
 IGNITION_FILE_NAME="frigate.ign"
+VMCONFIG_FILE="/etc/pve/qemu-server/${VMID}.conf"
 
 # Move the important disk data aside and restore it later if re-creating the VM
 CONTAINER_DATA_DISK="vm-${VMID}-disk-1"
@@ -152,5 +153,20 @@ qm set ${VMID} -args "${FW_CFG}"
 # Pass through nvidia GPU (and audio device)
 qm set ${VMID} --hostpci0 0000:0f:00.0,pcie=1,rombar=0
 qm set ${VMID} --hostpci1 0000:0f:00.1,pcie=1
+
+# Need multifunction to pass through the two devices at the same PCI address
+# but proxmox 7.1 doens't support it on the command line
+# Add multifunction=on if not already present on hostpci0
+if grep -q "^hostpci0:" "$VMCONFIG_FILE"; then
+  if ! grep -q "multifunction=on" "$VMCONFIG_FILE"; then
+    sed -i '/^hostpci0:/ s/$/,multifunction=on/' "$VMCONFIG_FILE"
+    echo "Added multifunction=on to hostpci0 in $VMCONFIG_FILE"
+  else
+    echo "multifunction=on already present in $VMCONFIG_FILE"
+  fi
+else
+  echo "hostpci0 line not found in $VMCONFIG_FILE"
+fi
+
 
 echo "[done]"
