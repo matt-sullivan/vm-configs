@@ -143,7 +143,7 @@ qm resize ${VMID} scsi1 ${VMDISK_SIZE}
 
 # UEFI bios to allow GPU passthrough, and a disk to support uefi bios settings
 # after the other disk operations to avoid interferring with disk naming assumptions
-qm set ${VMID} --bios ovmf -efidisk0 ${VMSTORAGE}:0,efitype=4m,pre-enrolled-keys=1
+qm set ${VMID} --bios ovmf -efidisk0 ${VMSTORAGE}:0,efitype=4m
 
 # Set fw_cfg to provide ignition config (in qemu image specific way.) 
 FW_CFG="-fw_cfg name=opt/com.coreos/config,file=${SNIPPET_STORAGE_PATH}/snippets/${IGNITION_FILE_NAME}"

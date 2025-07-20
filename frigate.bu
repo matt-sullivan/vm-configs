@@ -127,6 +127,30 @@ systemd:
       [Install]
       WantedBy=multi-user.target
 
+  - name: rebase-to-ucore.service
+    enabled: true
+    contents: |-
+      [Unit]
+      Description=Rebase to uCore NVIDIA Minimal
+      Wants=network-online.target
+      After=network-online.target
+
+      [Service]
+      Type=oneshot
+      RemainAfterExit=yes
+      ExecStart=/bin/bash -c '\
+        if ! rpm-ostree status | grep -q ucore; then \
+          rpm-ostree rebase --bypass-driver --experimental ostree-unverified-registry:ghcr.io/ublue-os/ucore-minimal:stable-nvidia && \
+          touch /etc/.ucore-rebase-in-progress && \
+          sleep 5 && \
+          reboot; \
+        else \
+          touch /etc/.ucore-rebase-complete; \
+        fi'
+
+      [Install]
+      WantedBy=multi-user.target
+
   - name: docker.portainer.service
     enabled: true
     contents: |-
@@ -134,6 +158,9 @@ systemd:
       Description=Portainer Admin Container
       After=docker.service
       Requires=docker.service var-mnt-container_data.mount
+      # Wait for ucore install
+      ConditionPathExists=/etc/.ucore-rebase-complete
+      After=network-online.target
 
       [Service]
       Type=oneshot
@@ -153,38 +180,12 @@ systemd:
 
       [Install]
       WantedBy=multi-user.target
-  - name: docker.qemu-agent.service
-    enabled: true
-    contents: |-
-      [Unit]
-      Description=QEMU Guest Agent Container
-      After=docker.service
-      Requires=docker.service var-mnt-container_data.mount
 
-      [Service]
-      Type=oneshot
-      RemainAfterExit=yes
-      TimeoutStartSec=0
-      ExecStartPre=-/usr/bin/docker stop %n
-      ExecStartPre=-/usr/bin/docker rm %n
-      # Privileged mode is required for binding to local socket to work due to SELINUX (https://github.com/portainer/portainer/issues/849)
-      ExecStart=/usr/bin/docker run --rm -d --name %n \
-        -v /dev:/dev \
-        -v /etc/os-release:/etc/os-release:ro \
-        -v /var/run/dbus/system_bus_socket:/var/run/dbus/system_bus_socket \
-        -v /sys/fs/cgroup:/sys/fs/cgroup \
-        -v /sbin/shutdown:/sbin/shutdown \
-        -v /bin/systemctl:/bin/systemctl \
-        -v /usr/lib/systemd:/usr/lib/systemd \
-        -v /lib64:/lib64 \
-        --privileged \
-        --uts=host \
-        --net=host \
-        docker.io/danskadra/qemu-ga -v
-      ExecStop=/usr/bin/docker stop -t 15 %n
+  ##############################################
+  # Removed  qemu-agent it's part of ucore image
+  ##############################################
 
-      [Install]
-      WantedBy=multi-user.target
+  # Disable watchtower, it doesn't seem maintained, not sure what to replace it with
   # - name: docker.watchtower.service
   #   enabled: true
   #   contents: |-
