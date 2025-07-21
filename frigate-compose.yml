@@ -16,6 +16,9 @@ services:
       - /etc/localtime:/etc/localtime:ro
       - /mnt/container_data/frigate_config:/config
       - /mnt/external_hdd_seagate/frigate_media/:/media/frigate
+      # Without docker swarm, can't use secrets properly but mount a dir and the container doesn't
+      # know the difference
+      - /mnt/container_data/frigate_secrets:/run/secrets
       - type: tmpfs # Optional: 1GB of memory, reduces SSD/SD Card wear
         target: /tmp/cache
         tmpfs:
@@ -26,5 +29,3 @@ services:
       - "8554:8554" # RTSP feeds
       - "8555:8555/tcp" # WebRTC over tcp
       - "8555:8555/udp" # WebRTC over udp
-    environment:
-      FRIGATE_RTSP_PASSWORD: ${FRIGATE_RTSP_PASSWORD}
