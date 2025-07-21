@@ -137,6 +137,31 @@ systemd:
       [Install]
       WantedBy=multi-user.target
 
+  # External HDD for frigate videos
+  - name: var-mnt-external_hdd_seagate.mount
+    enabled: true
+    contents: |-
+      [Unit]
+      Description=Frigate videos
+
+      [Mount]
+      What=/dev/disk/by-uuid/2F31-6170
+      Where=/var/mnt/external_hdd_seagate
+      Type=auto
+
+      [Install]
+      WantedBy=multi-user.target
+  - name: var-mnt-external_hdd_seagate.automount
+    enabled: true
+    contents: |-
+      [Unit]
+      Description=Frigate videos automount
+
+      [Automount]
+      Where=/var/mnt/external_hdd_seagate
+      [Install]
+      WantedBy=multi-user.target
+
   - name: rebase-to-ucore.service
     enabled: true
     contents: |-

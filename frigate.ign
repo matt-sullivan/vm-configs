@@ -120,6 +120,16 @@
         "name": "var-mnt-container_data.automount"
       },
       {
+        "contents": "[Unit]\nDescription=Frigate videos\n\n[Mount]\nWhat=/dev/disk/by-uuid/2F31-6170\nWhere=/var/mnt/external_hdd_seagate\nType=auto\n\n[Install]\nWantedBy=multi-user.target",
+        "enabled": true,
+        "name": "var-mnt-external_hdd_seagate.mount"
+      },
+      {
+        "contents": "[Unit]\nDescription=Frigate videos automount\n\n[Automount]\nWhere=/var/mnt/external_hdd_seagate\n[Install]\nWantedBy=multi-user.target",
+        "enabled": true,
+        "name": "var-mnt-external_hdd_seagate.automount"
+      },
+      {
         "contents": "[Unit]\nDescription=Rebase to uCore NVIDIA Minimal\nWants=network-online.target\nAfter=network-online.target\n\n[Service]\nType=oneshot\nRemainAfterExit=yes\nExecStart=/bin/bash -c '\\\n  if ! rpm-ostree status | grep -q ucore; then \\\n    rpm-ostree rebase --bypass-driver --experimental ostree-unverified-registry:ghcr.io/ublue-os/ucore-minimal:stable-nvidia \u0026\u0026 \\\n    touch /etc/.ucore-rebase-in-progress \u0026\u0026 \\\n    sleep 5 \u0026\u0026 \\\n    reboot; \\\n  else \\\n    touch /etc/.ucore-rebase-complete; \\\n  fi'\n\n[Install]\nWantedBy=multi-user.target",
         "enabled": true,
         "name": "rebase-to-ucore.service"

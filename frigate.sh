@@ -149,6 +149,9 @@ qm set ${VMID} --bios ovmf -efidisk0 ${VMSTORAGE}:0,efitype=4m
 FW_CFG="-fw_cfg name=opt/com.coreos/config,file=${SNIPPET_STORAGE_PATH}/snippets/${IGNITION_FILE_NAME}"
 qm set ${VMID} -args "${FW_CFG}"
 
+# Pass through the seagate external hdd
+qm set 104 -usb0 host=0bc2:2021,usb3=1
+
 # Pass through nvidia GPU (and audio device)
 qm set ${VMID} --hostpci0 0000:0f:00.0,pcie=1,rombar=0
 qm set ${VMID} --hostpci1 0000:0f:00.1,pcie=1
