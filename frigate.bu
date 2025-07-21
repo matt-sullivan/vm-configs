@@ -65,6 +65,16 @@ storage:
           [ipv6]
           method=disabled
 
+    # Enable dual stack docker
+    - path: /etc/docker/daemon.json
+      mode: 0600
+      contents:
+        inline: |
+          {
+            "ipv6": true,
+            "fixed-cidr-v6": "fd00:dead:beef::/48"
+          }
+
   directories:
     - path: /mnt/container_data/volumes
   
