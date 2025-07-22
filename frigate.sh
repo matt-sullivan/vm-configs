@@ -113,8 +113,6 @@ qm set ${VMID} --memory 8192 \
 			--ostype l26
 
 qm set ${VMID} --net0 virtio,bridge=vmbr0,tag=3
-# A second network for connecting to cameras. ATM it's on the IoT VLAN, but will probably move it later.
-qm set ${VMID} --net1 virtio,bridge=vmbr0,tag=3
 
 # add a serial console in case of emergency console and avoid the default serial-getty service failing
 qm set ${VMID} -serial0 socket
