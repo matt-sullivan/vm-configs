@@ -10,7 +10,7 @@ cameras:
         - path: rtsp://127.0.0.1:8554/footpath
           roles:
             - record
-        - path: rtsp://admin:{FRIGATE_RTSP_PASSWORD}@192.168.254.103:554/Streaming/Channels/102
+        - path: rtsp://admin:{FRIGATE_RTSP_PASSWORD}@192.168.3.12:554/Streaming/Channels/102
           roles:
             - detect
     detect:
@@ -22,7 +22,7 @@ cameras:
         - path: rtsp://127.0.0.1:8554/frontyard
           roles:
             - record
-        - path: rtsp://admin:{FRIGATE_RTSP_PASSWORD}@192.168.254.101:554/Streaming/Channels/102
+        - path: rtsp://admin:{FRIGATE_RTSP_PASSWORD}@192.168.3.13:554/Streaming/Channels/102
           roles:
             - detect
     detect:
@@ -34,7 +34,7 @@ cameras:
         - path: rtsp://127.0.0.1:8554/upstairs
           roles:
             - record
-        - path: rtsp://admin:{FRIGATE_RTSP_PASSWORD}@192.168.254.102:554/Streaming/Channels/102
+        - path: rtsp://admin:{FRIGATE_RTSP_PASSWORD}@192.168.3.14:554/Streaming/Channels/102
           roles:
             - detect
     detect:
@@ -46,7 +46,7 @@ cameras:
         - path: rtsp://127.0.0.1:8554/downstairs
           roles:
             - record
-        - path: rtsp://admin:{FRIGATE_RTSP_PASSWORD}@192.168.254.100:554/Streaming/Channels/102
+        - path: rtsp://admin:{FRIGATE_RTSP_PASSWORD}@192.168.3.15:554/Streaming/Channels/102
           roles:
             - detect
     detect:
@@ -55,13 +55,13 @@ cameras:
 go2rtc:
   streams:
     footpath:
-      - rtsp://admin:{FRIGATE_RTSP_PASSWORD}@192.168.254.103:554/Streaming/Channels/101
+      - rtsp://admin:{FRIGATE_RTSP_PASSWORD}@192.168.3.12:554/Streaming/Channels/101
     frontyard:
-      - rtsp://admin:{FRIGATE_RTSP_PASSWORD}@192.168.254.101:554/Streaming/Channels/101
+      - rtsp://admin:{FRIGATE_RTSP_PASSWORD}@192.168.3.13:554/Streaming/Channels/101
     upstairs:
-      - rtsp://admin:{FRIGATE_RTSP_PASSWORD}@192.168.254.102:554/Streaming/Channels/101
+      - rtsp://admin:{FRIGATE_RTSP_PASSWORD}@192.168.3.14:554/Streaming/Channels/101
     downstairs:
-      - rtsp://admin:{FRIGATE_RTSP_PASSWORD}@192.168.254.100:554/Streaming/Channels/101
+      - rtsp://admin:{FRIGATE_RTSP_PASSWORD}@192.168.3.15:554/Streaming/Channels/101
 
 record:
   enabled: true

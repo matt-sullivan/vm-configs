@@ -14,8 +14,8 @@ frigate-srv-portainer.mattnet.xyz {
 	reverse_proxy http://frigate-srv:9000
 }
 # Direct camera connections
-downstairs.mattnet.xyz {
-	reverse_proxy http://192.168.254.100 {
+footpath.mattnet.xyz {
+	reverse_proxy http://192.168.3.12 {
 		# Block all default and allow a small curated set to avoid too many headers error
 		header_up -*
 		header_up Host {host}                       # Original host requested by the client
@@ -27,6 +27,33 @@ downstairs.mattnet.xyz {
 		#header_up X-Forwarded-For {remote_host}
 		#header_up X-Forwarded-Proto {scheme}
 		#header_up User-Agent {http.request.header.User-Agent}
+	}
+}
+frontdeck.mattnet.xyz {
+	reverse_proxy http://192.168.3.13 {
+		# Block all default and allow a small curated set to avoid too many headers error
+		header_up -*
+		header_up Host {host}
+		header_up Cookie {http.request.header.Cookie}
+		header_up Accept {http.request.header.Accept}
+	}
+}
+upstairs.mattnet.xyz {
+	reverse_proxy http://192.168.3.14 {
+		# Block all default and allow a small curated set to avoid too many headers error
+		header_up -*
+		header_up Host {host}
+		header_up Cookie {http.request.header.Cookie}
+		header_up Accept {http.request.header.Accept}
+	}
+}
+downstairs.mattnet.xyz {
+	reverse_proxy http://192.168.3.15 {
+		# Block all default and allow a small curated set to avoid too many headers error
+		header_up -*
+		header_up Host {host}
+		header_up Cookie {http.request.header.Cookie}
+		header_up Accept {http.request.header.Accept}
 	}
 }
 unifi.mattnet.xyz {
