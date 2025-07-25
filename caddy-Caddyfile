@@ -1,8 +1,15 @@
-caddy.mattnet.xyz {
+# Note: Publicly available services should listen on 4000, private ones on 5000
+# This works because the server has 2 IPs, only one is allowed through the unifi router
+# and docker maps 443 on each of them to the different internal ports.
+# This allows me to use public dns names, not need to type any port numbers and only expose
+# some of the services to the internet.
+# To make this work it also requires an explicit dns provider plugin otherwise letsencrypt can't
+# authenticate we own a domain that it can't contact.
+https://caddy.mattnet.xyz:4000 {
 	respond "Caddy here"
 }
 # Frigate NVR
-cameras.mattnet.xyz {
+https://cameras.mattnet.xyz:4000 {
 	reverse_proxy https://frigate-srv:8971 {
 		transport http {
 			tls_insecure_skip_verify
@@ -10,11 +17,11 @@ cameras.mattnet.xyz {
 	}
 }
 # Frigate server portainer instance
-frigate-srv-portainer.mattnet.xyz {
+https://frigate-srv-portainer.mattnet.xyz:5000 {
 	reverse_proxy http://frigate-srv:9000
 }
 # Direct camera connections
-footpath.mattnet.xyz {
+https://footpath.mattnet.xyz:5000 {
 	reverse_proxy http://192.168.3.12 {
 		# Block all default and allow a small curated set to avoid too many headers error
 		header_up -*
@@ -29,7 +36,7 @@ footpath.mattnet.xyz {
 		#header_up User-Agent {http.request.header.User-Agent}
 	}
 }
-frontdeck.mattnet.xyz {
+https://frontdeck.mattnet.xyz:5000 {
 	reverse_proxy http://192.168.3.13 {
 		# Block all default and allow a small curated set to avoid too many headers error
 		header_up -*
@@ -38,7 +45,7 @@ frontdeck.mattnet.xyz {
 		header_up Accept {http.request.header.Accept}
 	}
 }
-upstairs.mattnet.xyz {
+https://upstairs.mattnet.xyz:5000 {
 	reverse_proxy http://192.168.3.14 {
 		# Block all default and allow a small curated set to avoid too many headers error
 		header_up -*
@@ -47,7 +54,7 @@ upstairs.mattnet.xyz {
 		header_up Accept {http.request.header.Accept}
 	}
 }
-downstairs.mattnet.xyz {
+https://downstairs.mattnet.xyz:5000 {
 	reverse_proxy http://192.168.3.15 {
 		# Block all default and allow a small curated set to avoid too many headers error
 		header_up -*
@@ -56,14 +63,14 @@ downstairs.mattnet.xyz {
 		header_up Accept {http.request.header.Accept}
 	}
 }
-unifi.mattnet.xyz {
+https://unifi.mattnet.xyz:5000 {
 	reverse_proxy https://unifi.local:8443 {
 		transport http {
 			tls_insecure_skip_verify
 		}
 	}
 }
-proxmox.mattnet.xyz {
+https://proxmox.mattnet.xyz:5000 {
 	reverse_proxy https://proxmox.local:8006 {
 		transport http {
 			tls_insecure_skip_verify

@@ -7,7 +7,11 @@ services:
     privileged: true
     restart: unless-stopped
     ports:
-      - "443:443"
+      # Map each IP to different ports so caddy can expose different services to each
+      # This allows me to use public dns names, not need to type any port numbers and
+      # only expose some of the services to the internet.
+      - "[2401:d002:ca03:3503:d739:e80d:6f00:4210]:443:4000"
+      - "[2401:d002:ca03:3503:d739:e80d:6f00:5000]:443:5000"
     volumes:
       - /mnt/container_data/caddy-config:/config
       - /mnt/container_data/caddy-data:/data
