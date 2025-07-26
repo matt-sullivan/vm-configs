@@ -3,7 +3,7 @@ name: caddy
 services:
   caddy:
     container_name: caddy
-    image: caddy
+    image: ghcr.io/williamjacksn/caddy-route53
     privileged: true
     restart: unless-stopped
     ports:
